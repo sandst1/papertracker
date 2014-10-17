@@ -6,7 +6,7 @@
 #include <QTimer>
 #include <QObject>
 #include "webcamviewer.h"
-
+#include "synth/audiocontrol.h"
 
 namespace Ui {
 class MainWindow;
@@ -27,6 +27,7 @@ private:
     cv::VideoCapture mCapture;
     QTimer* mTimer;
     WebcamViewer* mWebcamViewer;
+    AudioControl* mAudioControl;
 };
 
 #endif // MAINWINDOW_H

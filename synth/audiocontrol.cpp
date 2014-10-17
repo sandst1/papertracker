@@ -50,10 +50,7 @@ static int audioCallback(const void *inputBuffer, void *outputBuffer,
     for( i=0; i<framesPerBuffer; i++ )
     {
         *out++ = synth->snd();
-        *out++ = *(out-1);
     }
-
-    qDebug("out:%.2f", synth->snd());
 
     return paContinue;
 }
@@ -181,7 +178,7 @@ PaError AudioControl::initPortAudio()
 
     qDebug("AudioControl::output device got");
 
-    outputParameters.channelCount = 2;       /* stereo output */
+    outputParameters.channelCount = 1;       /* stereo output */
     outputParameters.sampleFormat = paFloat32; /* 32 bit floating point output */
     outputParameters.suggestedLatency = 0.05;//Pa_GetDeviceInfo( outputParameters.device )->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;

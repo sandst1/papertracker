@@ -81,6 +81,8 @@ public:
     void setWaveType(int type, int index);
     void setVolume(int volume);
 
+    inline LFO* getLfo() { return m_lfo; }
+
     //void setKey(Key key, Key prevKey, unsigned int index);
 
     int releaseTime();

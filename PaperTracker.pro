@@ -6,15 +6,26 @@
 
 QT       += core gui
 
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+greaterThan(QT_MAJOR_VERSION, 4): QT += widgets opengl
+
 
 TARGET = PaperTracker
 TEMPLATE = app
 
+CONFIG += link_pkgconfig
+PKGCONFIG += opencv
+LIBS += -lopencv_core -lopencv_highgui
+
+
+LIBS += -lportaudio
+
+INCLUDEPATH += /usr/local/opencv2
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    webcamviewer.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    webcamviewer.h
 
 FORMS    += mainwindow.ui

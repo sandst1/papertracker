@@ -52,7 +52,7 @@ private:
     std::vector<cv::Point2f> mDestCoords;
     cv::Mat mTransMtx;
 
-
+    std::vector<std::vector<cv::Point> > mNoteGrid;
 
 
 };

@@ -42,6 +42,15 @@ int perspectiveSetup = false;
 Mat NoteGrid::gridFound(Mat *image)
 {
 
+    for (int i = 0; i < mNoteGrid.size(); i++)
+    {
+        vector<Point> col = mNoteGrid.at(i);
+        for (int j = 0; j < col.size(); j++)
+        {
+            Point p = col.at(j);
+            circle(*image, p, 5, Scalar(0,0,255),2);
+        }
+    }
 
 
     return *image;
@@ -188,6 +197,17 @@ Mat NoteGrid::findGrid(Mat *image)
         for (int i = 0; i < ycoords.size(); i++)
         {
             qDebug() << "y: " << ycoords[i];
+        }
+
+
+        for (int i = 0; i < xcoords.size(); i++)
+        {
+            vector<Point> column;
+            for (int j = 0; j < ycoords.size(); j++)
+            {
+                column.push_back(Point(xcoords.at(i), ycoords.at(j)));
+            }
+            mNoteGrid.push_back(column);
         }
     }
 

@@ -14,7 +14,7 @@ TEMPLATE = app
 
 CONFIG += link_pkgconfig
 PKGCONFIG += opencv
-LIBS += -lopencv_core -lopencv_highgui
+LIBS += -lopencv_core -lopencv_highgui -lopencv_xphoto
 
 
 LIBS += -lportaudio

@@ -11,9 +11,6 @@
 using namespace std;
 using namespace cv;
 
-const int SCREEN_WIDTH = 640;
-const int SCREEN_HEIGHT = 480;
-
 #include <QDebug>
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
@@ -75,119 +72,10 @@ void MainWindow::timerEvent()
     Mat image;
     mCapture >> image;
 
-    image = correctPerspective(&image);
+    image = mNoteGrid->correctPerspective(&image);
 
-    //image = mNoteGrid->findGrid(&image);
+    image = mNoteGrid->findGrid(&image);
 
     mWebcamViewer->showImage(image);
 
-}
-
-Mat MainWindow::correctPerspective(Mat* image)
-{
-    Mat mat;
-    cvtColor(*image, mat, CV_BGR2GRAY);
-
-    threshold(mat, mat, 120, 255, CV_THRESH_BINARY);
-
-    bool x1found = false;
-    bool x2found = false;
-
-    bool x3found = false;
-    bool x4found = false;
-
-
-    int x1 = 0;
-    int x2 = 0;
-    int x3 = 0;
-    int x4 = 0;
-
-
-    uchar* left = &mat.data[0];
-    uchar* right = &mat.data[mat.cols-1];
-    uchar* left2 = &mat.data[mat.cols*(mat.rows-1)];
-    uchar* right2 = &mat.data[mat.cols*(mat.rows-1)+mat.cols-1];
-
-    for (int i = 0; i < mat.cols; i++)
-    {
-        if (!x1found)
-        {
-            if (*left == 255)
-            {
-                x1found = true;
-                x1 = i;
-            }
-            else
-            {
-                left++;
-            }
-        }
-
-        if (!x2found)
-        {
-            if (*right == 255)
-            {
-                x2found = true;
-                x2 = SCREEN_WIDTH - i;
-            }
-            else
-            {
-                right--;
-            }
-        }
-
-        if (!x3found)
-        {
-            if (*right2 == 255)
-            {
-                x3found = true;
-                x3 = SCREEN_WIDTH - i;
-            }
-            else
-            {
-                right2--;
-            }
-        }
-
-        if (!x4found)
-        {
-            if (*left2 == 255)
-            {
-                x4found = true;
-                x4 = i;
-            }
-            else
-            {
-                left2++;
-            }
-        }
-
-
-        if (x1found && x2found && x3found && x4found)
-        {
-            break;
-        }
-    }
-
-    vector<Point2f> corners;
-    corners.push_back(Point2f(x1, 10));
-    corners.push_back(Point2f(x2, 10));
-    corners.push_back(Point2f(x3, mat.rows-10));
-    corners.push_back(Point2f(x4, mat.rows-10));
-
-    Mat dst = Mat::zeros(SCREEN_HEIGHT, SCREEN_WIDTH, CV_8UC3);
-
-    vector<Point2f> dest_pts;
-    dest_pts.push_back(Point2f(0, 0));
-    dest_pts.push_back(Point2f(dst.cols, 0));
-    dest_pts.push_back(Point2f(dst.cols, dst.rows));
-    dest_pts.push_back(Point2f(0, dst.rows));
-
-    Mat src = image->clone();
-
-    Mat transmtx = getPerspectiveTransform(corners, dest_pts);
-
-    warpPerspective(src, dst, transmtx, dst.size());
-
-    return dst;
 }

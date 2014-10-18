@@ -25,7 +25,6 @@ private slots:
     void timerEvent();
 
 private:
-    cv::Mat correctPerspective(cv::Mat* image);
 
     cv::VideoCapture mCapture;
     QTimer* mTimer;

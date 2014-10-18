@@ -7,6 +7,9 @@
 
 #include <opencv2/opencv.hpp>
 
+const int SCREEN_WIDTH = 640;
+const int SCREEN_HEIGHT = 480;
+
 class NoteGrid : public QObject
 {
     Q_OBJECT
@@ -24,8 +27,12 @@ public:
 signals:
 
 public slots:
+    cv::Mat findGridLines(cv::Mat* image);
     cv::Mat findGrid(cv::Mat* image);
     cv::Mat gridFound(cv::Mat* image);
+    cv::Mat gridLinesFound(cv::Mat* image);
+
+    cv::Mat correctPerspective(cv::Mat* image);
 
 private:
     std::string getLineId(cv::Vec4i line, bool horizontal);
@@ -37,6 +44,15 @@ private:
 
     std::vector<cv::Vec4i> mHorLines;
     std::vector<cv::Vec4i> mVerLines;
+
+    cv::SimpleBlobDetector::Params mSimpleBlobParams;
+    cv::FeatureDetector* mSimpleBlob;
+
+    std::vector<cv::Point2f> mPaperCoords;
+    std::vector<cv::Point2f> mDestCoords;
+    cv::Mat mTransMtx;
+
+
 
 };
 

@@ -7,6 +7,7 @@
 #include <QObject>
 #include "webcamviewer.h"
 #include "synth/audiocontrol.h"
+#include "notegrid.h"
 
 namespace Ui {
 class MainWindow;
@@ -24,10 +25,14 @@ private slots:
     void timerEvent();
 
 private:
+    cv::Mat correctPerspective(cv::Mat* image);
+
     cv::VideoCapture mCapture;
     QTimer* mTimer;
     WebcamViewer* mWebcamViewer;
     AudioControl* mAudioControl;
+    NoteGrid* mNoteGrid;
+
 };
 
 #endif // MAINWINDOW_H

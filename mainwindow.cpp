@@ -20,6 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     mWebcamViewer = new WebcamViewer(this);
     mAudioControl = new AudioControl(this);
+    mNoteGrid = new NoteGrid(this);
+
     mTimer = new QTimer(this);
     QObject::connect(mTimer, SIGNAL(timeout()), this, SLOT(timerEvent()));
 
@@ -32,7 +34,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     mCapture.set(CV_CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH);
     mCapture.set(CV_CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT);
-
 
 //    mAudioControl->start();
 
@@ -69,70 +70,124 @@ MainWindow::~MainWindow()
 }
 
 
-static cv::Mat processImg(cv::Mat* image)
-{
-
-    cv::Mat mat;
-
-    cv::cvtColor(*image, mat, CV_BGR2GRAY);
-
-    //cv::threshold(mat, mat, 150, 255, CV_THRESH_BINARY_INV);
-    //cv::medianBlur(mat, mat, 3);
-    //cv::adaptiveThreshold(mat, mat, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY, 15, 0);
-
-    cv::adaptiveThreshold(mat, mat, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 15, 0);
-
-
-    cv::Mat cmat;
-    cv::cvtColor(mat, cmat, CV_GRAY2BGR);
-//    vector<cv::Vec2f> lines;
-//    cv::HoughLines(mat, lines, 1, CV_PI/180, 150, 0, 0);
-
-//    // draw lines
-//       for( size_t i = 0; i < lines.size(); i++ )
-//       {
-//           float rho = lines[i][0], theta = lines[i][1];
-//           cv::Point pt1, pt2;
-//           double a = cos(theta), b = sin(theta);
-//           double x0 = a*rho, y0 = b*rho;
-//           pt1.x = cvRound(x0 + 1000*(-b));
-//           pt1.y = cvRound(y0 + 1000*(a));
-//           pt2.x = cvRound(x0 - 1000*(-b));
-//           pt2.y = cvRound(y0 - 1000*(a));
-//           line( cmat, pt1, pt2, cv::Scalar(0,0,255), 3, CV_AA);
-//       }
-
-    vector<Vec4i> lines;
-
-    int rho = 1;
-    float theta = CV_PI/180;
-    int threshold = 75;
-    int minLength = 75;
-    int maxGap = 2;
-
-    HoughLinesP(mat, lines, rho, theta, threshold, minLength, maxGap);
-    for( size_t i = 0; i < lines.size(); i++ )
-    {
-        Vec4i l = lines[i];
-        line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 3, CV_AA);
-    }
-
-
-
-    return cmat;
-
-}
-
 void MainWindow::timerEvent()
 {
-    cv::Mat image;
+    Mat image;
     mCapture >> image;
 
-    image = processImg(&image);
+    image = correctPerspective(&image);
 
-
+    //image = mNoteGrid->findGrid(&image);
 
     mWebcamViewer->showImage(image);
 
 }
 
+Mat MainWindow::correctPerspective(Mat* image)
+{
+    Mat mat;
+    cvtColor(*image, mat, CV_BGR2GRAY);
+
+    threshold(mat, mat, 120, 255, CV_THRESH_BINARY);
+
+    bool x1found = false;
+    bool x2found = false;
+
+    bool x3found = false;
+    bool x4found = false;
+
+
+    int x1 = 0;
+    int x2 = 0;
+    int x3 = 0;
+    int x4 = 0;
+
+
+    uchar* left = &mat.data[0];
+    uchar* right = &mat.data[mat.cols-1];
+    uchar* left2 = &mat.data[mat.cols*(mat.rows-1)];
+    uchar* right2 = &mat.data[mat.cols*(mat.rows-1)+mat.cols-1];
+
+    for (int i = 0; i < mat.cols; i++)
+    {
+        if (!x1found)
+        {
+            if (*left == 255)
+            {
+                x1found = true;
+                x1 = i;
+            }
+            else
+            {
+                left++;
+            }
+        }
+
+        if (!x2found)
+        {
+            if (*right == 255)
+            {
+                x2found = true;
+                x2 = SCREEN_WIDTH - i;
+            }
+            else
+            {
+                right--;
+            }
+        }
+
+        if (!x3found)
+        {
+            if (*right2 == 255)
+            {
+                x3found = true;
+                x3 = SCREEN_WIDTH - i;
+            }
+            else
+            {
+                right2--;
+            }
+        }
+
+        if (!x4found)
+        {
+            if (*left2 == 255)
+            {
+                x4found = true;
+                x4 = i;
+            }
+            else
+            {
+                left2++;
+            }
+        }
+
+
+        if (x1found && x2found && x3found && x4found)
+        {
+            break;
+        }
+    }
+
+    vector<Point2f> corners;
+    corners.push_back(Point2f(x1, 10));
+    corners.push_back(Point2f(x2, 10));
+    corners.push_back(Point2f(x3, mat.rows-10));
+    corners.push_back(Point2f(x4, mat.rows-10));
+
+    Mat dst = Mat::zeros(SCREEN_HEIGHT, SCREEN_WIDTH, CV_8UC3);
+
+    vector<Point2f> dest_pts;
+    dest_pts.push_back(Point2f(0, 0));
+    dest_pts.push_back(Point2f(dst.cols, 0));
+    dest_pts.push_back(Point2f(dst.cols, dst.rows));
+    dest_pts.push_back(Point2f(0, dst.rows));
+
+    Mat src = image->clone();
+
+    Mat transmtx = getPerspectiveTransform(corners, dest_pts);
+
+    warpPerspective(src, dst, transmtx, dst.size());
+
+    return dst;
+}

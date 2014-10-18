@@ -162,16 +162,10 @@ Mat NoteGrid::findGrid(Mat *image)
         {
             int y = it->first;
 
-            qDebug() << "y: " << y;
-
-                        continue;
-
-
-
             if (prevy != -1)
             {
                 int d = y - prevy;
-                if (d < 10)
+                if (d < 4)
                 {
                     ysum += y;
                     ycnt++;
@@ -180,6 +174,8 @@ Mat NoteGrid::findGrid(Mat *image)
                 {
                     int ymean = ysum / ycnt;
                     ycoords.push_back(ymean);
+                    qDebug() << "ymean " << ymean;
+
                     ysum = 0;
                     ycnt = 0;
                     prevy = -1;
@@ -187,8 +183,6 @@ Mat NoteGrid::findGrid(Mat *image)
 
             }
             prevy = y;
-
-            //qDebug() << it->first << "," << it->second;
         }
 
         for (int i = 0; i < ycoords.size(); i++)
@@ -421,8 +415,8 @@ Mat NoteGrid::correctPerspective(Mat* image)
     vector<Point2f> corners;
     corners.push_back(Point2f(x1, 10));
     corners.push_back(Point2f(x2, 10));
-    corners.push_back(Point2f(x3, mat.rows-10));
-    corners.push_back(Point2f(x4, mat.rows-10));
+    corners.push_back(Point2f(x3, mat.rows));
+    corners.push_back(Point2f(x4, mat.rows));
 
     mPaperCoords = corners;
 

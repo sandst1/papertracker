@@ -44,7 +44,7 @@ Mat NoteGrid::gridFound(Mat *image)
 
 
 
-return *image;
+    return *image;
 }
 
 Mat NoteGrid::gridLinesFound(Mat* image)
@@ -74,7 +74,6 @@ Mat NoteGrid::findGrid(Mat *image)
     }
     else if (mStatus == GRID_FOUND)
     {
-        qDebug("gridFound!");
         return gridFound(image);
     }
 
@@ -83,37 +82,119 @@ Mat NoteGrid::findGrid(Mat *image)
 
     adaptiveThreshold(mat, mat, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, 21, -1);
 
-    //threshold(mat, mat, 150, 255, CV_THRESH_BINARY_INV);
-
-
     medianBlur(mat, mat, 3);
     //GaussianBlur(mat, mat, Size(5, 5), 1.6);
     //boxFilter(mat, mat, -1, Size(3,3));
-
-    //SimpleBlobDetector
-
-    // autocorrelation?
 
     cvtColor(mat, mat, CV_GRAY2BGR);
 
     vector<KeyPoint> kpoints;
     mSimpleBlob->detect(mat, kpoints);
 
+    multimap<int, int> coordsByX;
+    multimap<int, int> coordsByY;
+
     for (int i = 0; i < kpoints.size(); i++)
     {
         float x = kpoints[i].pt.x;
         float y = kpoints[i].pt.y;
 
+        int xint = (int)x;
+        int yint = (int)y;
 
+        coordsByX.insert(make_pair(xint, yint));
+        coordsByY.insert(make_pair(yint, xint));
 
 
         circle(mat, kpoints[i].pt, 3, Scalar(0, 0, 255), 2);
     }
 
-    //findCount++;
+    findCount++;
     if (findCount == 15)
     {
         mStatus = GRID_FOUND;
+
+        // Interpolate the note grid
+
+        vector<int> xcoords;
+
+        int prevx = -1;
+        int xsum = 0;
+        int xcnt = 0;
+        for (multimap<int,int>::iterator it = coordsByX.begin(); it != coordsByX.end(); it++)
+        {
+            int x = it->first;
+            if (prevx != -1)
+            {
+                int d = x - prevx;
+                if (d < 10)
+                {
+                    xsum += x;
+                    xcnt++;
+                }
+                else
+                {
+                    int xmean = xsum / xcnt;
+                    xcoords.push_back(xmean);
+                    xsum = 0;
+                    xcnt = 0;
+                    prevx = -1;
+                }
+
+            }
+            prevx = x;
+
+            //qDebug() << it->first << "," << it->second;
+        }
+
+        for (int i = 0; i < xcoords.size(); i++)
+        {
+            qDebug() << "x: " << xcoords[i];
+        }
+
+
+        vector<int> ycoords;
+
+        int prevy = -1;
+        int ysum = 0;
+        int ycnt = 0;
+        for (multimap<int,int>::iterator it = coordsByY.begin(); it != coordsByY.end(); it++)
+        {
+            int y = it->first;
+
+            qDebug() << "y: " << y;
+
+                        continue;
+
+
+
+            if (prevy != -1)
+            {
+                int d = y - prevy;
+                if (d < 10)
+                {
+                    ysum += y;
+                    ycnt++;
+                }
+                else
+                {
+                    int ymean = ysum / ycnt;
+                    ycoords.push_back(ymean);
+                    ysum = 0;
+                    ycnt = 0;
+                    prevy = -1;
+                }
+
+            }
+            prevy = y;
+
+            //qDebug() << it->first << "," << it->second;
+        }
+
+        for (int i = 0; i < ycoords.size(); i++)
+        {
+            qDebug() << "y: " << ycoords[i];
+        }
     }
 
     return mat;
@@ -128,7 +209,6 @@ Mat NoteGrid::findGridLines(Mat* image)
     }
     else if (mStatus == GRID_FOUND)
     {
-        qDebug("gridFound!");
         return gridLinesFound(image);
     }
 
@@ -239,7 +319,6 @@ string NoteGrid::getLineId(Vec4i line, bool horizontal)
     }
     return string(dst);
 }
-
 
 Mat NoteGrid::correctPerspective(Mat* image)
 {

@@ -15,6 +15,10 @@ const int VER_THOLD = 15; // px
 const double ANGLE_THOLD = 10; // deg
 const int MERGE_LINES_DIST = 5;
 
+int findCount = 0;
+int perspectiveSetup = false;
+int perspectiveCount = 0;
+
 NoteGrid::NoteGrid(QObject *parent) :
     QObject(parent)
 {
@@ -35,9 +39,6 @@ NoteGrid::NoteGrid(QObject *parent) :
 
     mSimpleBlob->create("SimpleBlob");
 }
-
-int findCount = 0;
-int perspectiveSetup = false;
 
 Mat NoteGrid::gridFound(Mat *image)
 {
@@ -77,6 +78,11 @@ Mat NoteGrid::gridLinesFound(Mat* image)
 
 Mat NoteGrid::findGrid(Mat *image)
 {
+    if (!perspectiveSetup)
+    {
+        return *image;
+    }
+
     if (mStatus == NOT_INITIALIZED)
     {
         mStatus = FINDING_GRID;
@@ -183,7 +189,6 @@ Mat NoteGrid::findGrid(Mat *image)
                 {
                     int ymean = ysum / ycnt;
                     ycoords.push_back(ymean);
-                    qDebug() << "ymean " << ymean;
 
                     ysum = 0;
                     ycnt = 0;
@@ -265,16 +270,9 @@ Mat NoteGrid::findGridLines(Mat* image)
         {
             string lineId = getLineId(l, true);
 
-            //double angleDeg = abs(atan2(dy, dx) * 180 / CV_PI);
+            mHorMap[lineId] = l;
 
-            //if (angleDeg < ANGLE_THOLD)
-            //{
-                mHorMap[lineId] = l;
-
-                line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
-            //}
-
-
+            line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
         }
 
         // Find vertical lines
@@ -282,13 +280,8 @@ Mat NoteGrid::findGridLines(Mat* image)
         if (abs(l[0] - l[2]) < VER_THOLD)
         {
             string lineId = getLineId(l, false);
-            //double angleDeg = abs(atan2(dx, dy) * 180 / CV_PI);
-
-            //if (angleDeg < ANGLE_THOLD)
-            //{
-                mVerMap[lineId] = l;
-                line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,255,0), 1, CV_AA);
-            //}
+            mVerMap[lineId] = l;
+            line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,255,0), 1, CV_AA);
         }
     }
 
@@ -318,9 +311,6 @@ Mat NoteGrid::findGridLines(Mat* image)
 string NoteGrid::getLineId(Vec4i line, bool horizontal)
 {
     char dst[100];
-
-    //sprintf(dst,"%d,%d,%d,%d", line[0], line[1], line[2], line[3]);
-
     if (horizontal)
     {
         int key = (int)(((double)line[1]+line[3])/2);
@@ -334,16 +324,15 @@ string NoteGrid::getLineId(Vec4i line, bool horizontal)
     return string(dst);
 }
 
+
+
 Mat NoteGrid::correctPerspective(Mat* image)
 {
-
     if (perspectiveSetup)
     {
-
         Mat src = image->clone();
         Mat dst = Mat::zeros(SCREEN_HEIGHT, SCREEN_WIDTH, CV_8UC3);
         warpPerspective(src, dst, mTransMtx, dst.size());
-
         return dst;
     }
 
@@ -456,7 +445,11 @@ Mat NoteGrid::correctPerspective(Mat* image)
 
     warpPerspective(src, dst, transmtx, dst.size());
 
-    perspectiveSetup = true;
+    perspectiveCount++;
+    if (perspectiveCount == 60)
+    {
+        perspectiveSetup = true;
+    }
     return dst;
 }
 

@@ -72,9 +72,9 @@ void MainWindow::timerEvent()
     Mat image;
     mCapture >> image;
 
-    image = mNoteGrid->correctPerspective(&image);
+    //image = mNoteGrid->correctPerspective(&image);
 
-    image = mNoteGrid->findGrid(&image);
+    //image = mNoteGrid->findGrid(&image);
 
     mWebcamViewer->showImage(image);
 

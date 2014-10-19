@@ -7,6 +7,9 @@
 
 #include <opencv2/opencv.hpp>
 
+#include "synth/audiocontrol.h"
+#include "playclock.h"
+
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 
@@ -24,6 +27,8 @@ public:
     explicit NoteGrid(QObject *parent = 0);
 
     inline Status status() { return mStatus; }
+
+    void setAudioControl(AudioControl* ac);
 
 signals:
 
@@ -57,7 +62,9 @@ private:
 
     cv::Mat mLatestFrame;
 
+    PlayClock* mClock;
 
+    AudioControl* mAudioControl;
 };
 
 #endif // NOTEGRID_H

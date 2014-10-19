@@ -34,7 +34,8 @@ SOURCES += main.cpp\
     synth/reverb.cpp \
     synth/synth.cpp \
     synth/wah.cpp \
-    notegrid.cpp
+    notegrid.cpp \
+    playclock.cpp
 
 HEADERS  += mainwindow.h \
     webcamviewer.h \
@@ -49,6 +50,7 @@ HEADERS  += mainwindow.h \
     synth/reverb.h \
     synth/synth.h \
     synth/wah.h \
-    notegrid.h
+    notegrid.h \
+    playclock.h
 
 FORMS    += mainwindow.ui

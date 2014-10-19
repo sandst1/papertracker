@@ -91,7 +91,7 @@ void Synth::keyPressed(Key key, unsigned int index)
     }
 }
 
-void Synth::keyReleased(Key key, unsigned int index)
+void Synth::keyReleased(unsigned int index)
 {
     qDebug("Synth::keyReleased, index %d", index);
     KeyData* keyData = &(m_pressedKeys[index]);

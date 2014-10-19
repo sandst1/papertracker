@@ -48,10 +48,8 @@
 #define FREQ_B      30.87
 #define FREQ_C2     32.70
 
-const float FREQZTABLE[KEYS_IN_OCTAVE] = { FREQ_C, FREQ_D, FREQ_E, FREQ_F,
-                                           FREQ_G, FREQ_A, FREQ_B, FREQ_Cis,
-                                           FREQ_Dis, FREQ_Fis,
-                                           FREQ_Gis, FREQ_Bb };
+const float FREQZTABLE[KEYS_IN_OCTAVE] = { FREQ_C, FREQ_Cis, FREQ_D, FREQ_Dis, FREQ_E, FREQ_F,
+                                           FREQ_Fis, FREQ_G, FREQ_Gis, FREQ_A, FREQ_Bb, FREQ_B};
 
 
 #endif // CONSTANTS_TYPES_H

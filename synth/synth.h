@@ -37,37 +37,37 @@ public:
     enum Key
     {
         KEY_C = 0,
+        KEY_CIS,
         KEY_D,
+        KEY_DIS,
         KEY_E,
         KEY_F,
-        KEY_G,
-        KEY_A,
-        KEY_B,
-        KEY_CIS,
-        KEY_DIS,
         KEY_FIS,
+        KEY_G,
         KEY_GIS,
+        KEY_A,
         KEY_BB,
+        KEY_B,
         KEY_C2,
+        KEY_CIS2,
         KEY_D2,
+        KEY_DIS2,
         KEY_E2,
         KEY_F2,
-        KEY_G2,
-        KEY_A2,
-        KEY_B2,
-        KEY_CIS2,
-        KEY_DIS2,
         KEY_FIS2,
+        KEY_G2,
         KEY_GIS2,
+        KEY_A2,
         KEY_BB2,
+        KEY_B2,
         KEY_C3,
+        KEY_CIS3,
         KEY_D3,
+        KEY_DIS3,
         KEY_E3,
         KEY_F3,
-        KEY_G3,
-        KEY_CIS3 = KEY_CIS2+KEYS_IN_OCTAVE,
-        KEY_DIS3,
         KEY_FIS3,
+        KEY_G3,
         KEY_NONE
     };
 
@@ -75,7 +75,7 @@ public:
     ~Synth();
 
     void keyPressed(Key key, unsigned int index);
-    void keyReleased(Key key, unsigned int index);
+    void keyReleased(unsigned int index);
     void keySustain(Key key, unsigned int index);
 
     void setWaveType(int type, int index);

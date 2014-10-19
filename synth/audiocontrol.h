@@ -45,7 +45,7 @@ public slots:
     // QML interface
     //virtual void setKey(int key, unsigned int index);
     virtual void pressKey(int key, unsigned int index);
-    virtual void releaseKey(int key, unsigned int index);
+    virtual void releaseKey(unsigned int index);
     virtual void sustainKey(int key, unsigned int index);
     virtual void exitApp();
 

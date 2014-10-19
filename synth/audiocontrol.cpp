@@ -105,9 +105,9 @@ void AudioControl::pressKey(int key, unsigned int index)
     Pa_StartStream(m_audioStream);
 }
 
-void AudioControl::releaseKey(int key, unsigned int index)
+void AudioControl::releaseKey(unsigned int index)
 {    
-    m_synth->keyReleased((Synth::Key)key, index);
+    m_synth->keyReleased(index);
 }
 
 void AudioControl::sustainKey(int key, unsigned int index)

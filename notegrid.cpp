@@ -5,6 +5,10 @@
 #include <math.h>
 #include <stdio.h>
 
+#include <set>
+
+#include "synth/synth.h"
+
 #include <QDebug>
 
 using namespace cv;
@@ -38,32 +42,139 @@ NoteGrid::NoteGrid(QObject *parent) :
     mSimpleBlob = new SimpleBlobDetector(mSimpleBlobParams);
 
     mSimpleBlob->create("SimpleBlob");
+
+    mClock = new PlayClock(this);
+    mClock->start();
 }
+
+void NoteGrid::setAudioControl(AudioControl* ac)
+{
+    mAudioControl = ac;
+}
+
+static int yIndexToNote(int index)
+{
+    if (index > 30)
+    {
+        return Synth::KEY_G3;
+    }
+    return (30 - index);
+}
+
+int median(vector<int> vec)
+{
+        typedef vector<int>::size_type vec_sz;
+
+        vec_sz size = vec.size();
+        if (size == 0)
+             return 0;
+
+        sort(vec.begin(), vec.end());
+
+        vec_sz mid = size/2;
+
+        double res = size % 2 == 0 ? (vec[mid] + vec[mid-1]) / 2 : vec[mid];
+        return (int)res;
+}
+
 
 Mat NoteGrid::gridFound(Mat *image)
 {
     cvtColor(*image, mLatestFrame, CV_BGR2GRAY);
 
-
-    for (int i = 0; i < mNoteGrid.size(); i++)
-    {
-        vector<Point> col = mNoteGrid.at(i);
-        for (int j = 0; j < col.size(); j++)
-        {
-            Point p = col.at(j);
-//            circle(*image, p, 5, Scalar(0,0,255),2);
-        }
-    }
+    int curStep = mClock->step();
+    vector<Point> curCol = mNoteGrid.at(curStep);
 
     Mat mat;
     cvtColor(*image, mat, CV_BGR2GRAY);
-    //medianBlur(mat, mat, 7);
-    //medianBlur(mat, mat, 3);
+    medianBlur(mat, mat, 3);
+    medianBlur(mat, mat, 5);
 
-    //adaptiveThreshold(mat, mat, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, 21, -1);
-    threshold(mat, mat, 135, 255, CV_THRESH_BINARY);
+    Mat noteDst;
+
+    adaptiveThreshold(mat, noteDst, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 23, 0);
+
+    /*
+     *Debug rectangles!
+     *
+    cvtColor(mat, mat, CV_GRAY2BGR);
+    for (int aa = 0; aa < mNoteGrid.size(); aa++)
+    {
+        vector<Point> aCol = mNoteGrid.at(aa);
+        for (int i = 0; i < aCol.size(); i++)
+        {
+            Point curP = aCol.at(i);
+
+            rectangle(mat, Rect(curP.x-2, curP.y-2, 6, 6),Scalar(0, 255, 0), 1);
+            //circle(mat, Point(curP.x, curP.y), 5, Scalar(0, 255, 0), 1);
+        }
+    }
 
     return mat;
+    */
+
+
+
+    //medianBlur(mat, mat, 5);
+    //GaussianBlur(mat, mat, Size(15,15), 0.4);
+    //threshold(mat, mat, 135, 255, CV_THRESH_BINARY_INV);
+    //qDebug() << mat.cols << ", " << mat.rows;
+    //return mat;
+
+
+    int activeNote = -1;
+
+    // Find currently active note
+    for (int i = 1; i < curCol.size(); i++)
+    {
+        Point curP = curCol.at(i);
+
+        uchar* curPtr = &noteDst.data[(curP.y-2)*SCREEN_WIDTH + curP.x-2];
+
+        //circle(*image, Point(curP.x+3, curP.y+3), 3, Scalar(0, 255, 0), 1);
+
+        //qDebug() << curP.y;
+        vector<int> pixvals;
+        // get the mean of the note
+        for (int k = 0; k < 6; k++)
+        {
+            for (int j = 0; j < 6; j++)
+            {
+                pixvals.push_back((int)(*curPtr));
+                curPtr++;
+            }
+            curPtr += (SCREEN_WIDTH - 6);
+        }
+
+
+        //qDebug() << "step " << curStep << ", (x,y):" << curP.x << "," << curP.y << ", median: " << median(pixvals) << ", mean: " << sum;
+
+
+        if (median(pixvals) > 128)
+        {
+            activeNote = i;
+        }
+    }
+
+    if (activeNote)
+    {
+        mAudioControl->releaseKey(0);
+        mAudioControl->pressKey(yIndexToNote(activeNote), 0);
+    }
+    else
+    {
+        mAudioControl->releaseKey(0);
+    }
+
+    Point p = curCol.at(0);
+    line(*image, Point(p.x, 0), Point(p.x, SCREEN_HEIGHT), Scalar(0,0,255),2);
+
+
+
+
+
+
+    return *image;
 }
 
 Mat NoteGrid::findGrid(Mat *image)

@@ -35,27 +35,30 @@ MainWindow::MainWindow(QWidget *parent) :
     mCapture.set(CV_CAP_PROP_FRAME_WIDTH, SCREEN_WIDTH);
     mCapture.set(CV_CAP_PROP_FRAME_HEIGHT, SCREEN_HEIGHT);
 
-//    mAudioControl->start();
+    mNoteGrid->setAudioControl(mAudioControl);
+    mAudioControl->start();
 
-//    QMutex& waitAudio = mAudioControl->getStartLock();
-//    qDebug("main::waiting for Audio thread to initialize");
-//    waitAudio.lock();
-//    qDebug("main::Audio thread initialized");
-//    waitAudio.unlock();
+
+
+    QMutex& waitAudio = mAudioControl->getStartLock();
+    qDebug("main::waiting for Audio thread to initialize");
+    waitAudio.lock();
+    qDebug("main::Audio thread initialized");
+    waitAudio.unlock();
 
 
     mTimer->setInterval(50);
     mTimer->start();
 
-//    Synth* synth = mAudioControl->getSynth();
-//    synth->setWaveType(Operator::SQUARE, 0);
-//    synth->setVolume(85);
-//    synth->octaveDown();
+    Synth* synth = mAudioControl->getSynth();
+    synth->setWaveType(Operator::SQUARE, 0);
+    synth->setVolume(85);
+    synth->octaveDown();
 
-//    LFO* lfo = synth->getLfo();
+    LFO* lfo = synth->getLfo();
 
-//    lfo->setAmp(100);
-//    lfo->setFreq(15);
+    lfo->setAmp(100);
+    lfo->setFreq(15);
 
 
 //QMetaObject::invokeMethod(mAudioControl, "pressKey", Q_ARG(int, Synth::KEY_C2), Q_ARG(unsigned int, 0));

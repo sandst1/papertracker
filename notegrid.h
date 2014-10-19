@@ -65,6 +65,8 @@ private:
     PlayClock* mClock;
 
     AudioControl* mAudioControl;
+
+    int mActiveNote;
 };
 
 #endif // NOTEGRID_H

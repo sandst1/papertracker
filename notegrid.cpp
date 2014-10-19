@@ -44,6 +44,7 @@ NoteGrid::NoteGrid(QObject *parent) :
     mSimpleBlob->create("SimpleBlob");
 
     mClock = new PlayClock(this);
+    mActiveNote = -1;
 }
 
 void NoteGrid::setAudioControl(AudioControl* ac)
@@ -76,7 +77,7 @@ int median(vector<int> vec)
         return (int)res;
 }
 
-bool released = true;
+bool pressed = true;
 Mat NoteGrid::gridFound(Mat *image)
 {
     cvtColor(*image, mLatestFrame, CV_BGR2GRAY);
@@ -155,20 +156,31 @@ Mat NoteGrid::gridFound(Mat *image)
         }
     }
 
-    if (activeNote != -1)
+    if (activeNote != -1 && activeNote != mActiveNote)
     {
         qDebug() << "step: " << curStep << ", note: " << activeNote;
         //mAudioControl->releaseKey(0);
-        mAudioControl->pressKey(yIndexToNote(activeNote), 0);
 
+
+        if (pressed)
+        {
+            mAudioControl->sustainKey(yIndexToNote(activeNote), 0);
+        }
+        else
+        {
+            mAudioControl->pressKey(yIndexToNote(activeNote), 0);
+            pressed = true;
+        }
 
 
     }
     else
     {
-        mAudioControl->releaseKey(0);
-        released = true;
+       // mAudioControl->releaseKey(0);
+        pressed = false;
     }
+
+    mActiveNote = activeNote;
 
     Point p = curCol.at(0);
     line(*image, Point(p.x, 0), Point(p.x, SCREEN_HEIGHT), Scalar(0,0,255),2);

@@ -29,6 +29,7 @@ Synth::Synth(QObject *parent) :
     QObject(parent), m_pressedKeys(), m_octaveFactor(8), m_pitchBend(false)
 {
     m_operators[0] = new Operator(this);
+    m_operators[0]->setVolume(85);
     m_operators[1] = new Operator(this);
     m_operators[2] = new Operator(this);
     m_operators[3] = new Operator(this);

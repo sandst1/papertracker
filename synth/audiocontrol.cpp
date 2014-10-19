@@ -113,6 +113,7 @@ void AudioControl::releaseKey(unsigned int index)
 void AudioControl::sustainKey(int key, unsigned int index)
 {
     m_synth->keySustain((Synth::Key)key, index);
+       Pa_StartStream(m_audioStream);
 }
 
 void AudioControl::exitApp()

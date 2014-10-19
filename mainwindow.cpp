@@ -51,14 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
     mTimer->start();
 
     Synth* synth = mAudioControl->getSynth();
-    synth->setWaveType(Operator::SAW, 0);
-    synth->setVolume(85);
-    //synth->octaveDown();
-
-    LFO* lfo = synth->getLfo();
-
-    lfo->setAmp(100);
-    lfo->setFreq(15);
+    synth->setWaveType(Operator::SINE, 0);
+    //synth->setVolume(85);
+    synth->octaveDown();
 
 
 //QMetaObject::invokeMethod(mAudioControl, "pressKey", Q_ARG(int, Synth::KEY_C2), Q_ARG(unsigned int, 0));

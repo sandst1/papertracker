@@ -33,8 +33,10 @@ Operator::Operator(QObject *parent) :
     m_envValues(),
     m_envelopes()
 {
-    m_envelopes[0].amp = 1.0;
+    m_envelopes[0].amp = 1.0;   
     m_envelopes[1].amp = 1.0;
+
+    setSustain(100);
 }
 
 // QML interface

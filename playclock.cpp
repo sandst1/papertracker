@@ -5,7 +5,8 @@ const int MSEC_IN_MIN = 60*1000; // ms
 PlayClock::PlayClock(QObject *parent) :
     QObject(parent)
 {
-    mTempo = 120;
+    // TODO: FIX
+    mTempo = 450;
     mTimer = new QTimer(this);
     mStep = 0;
 

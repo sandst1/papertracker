@@ -51,9 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
     mTimer->start();
 
     Synth* synth = mAudioControl->getSynth();
-    synth->setWaveType(Operator::SQUARE, 0);
+    synth->setWaveType(Operator::SAW, 0);
     synth->setVolume(85);
-    synth->octaveDown();
+    //synth->octaveDown();
 
     LFO* lfo = synth->getLfo();
 

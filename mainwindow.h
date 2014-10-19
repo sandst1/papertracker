@@ -21,6 +21,9 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+public slots:
+    void mousePressed(int x, int y);
+
 private slots:
     void timerEvent();
 

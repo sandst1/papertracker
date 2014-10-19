@@ -22,7 +22,7 @@ int perspectiveCount = 0;
 NoteGrid::NoteGrid(QObject *parent) :
     QObject(parent)
 {
-    mStatus = NOT_INITIALIZED;
+    mStatus = FIXING_PERSPECTIVE;
 
     mSimpleBlobParams.minDistBetweenBlobs = 5.0f;
     mSimpleBlobParams.filterByInertia = false;
@@ -42,7 +42,6 @@ NoteGrid::NoteGrid(QObject *parent) :
 
 Mat NoteGrid::gridFound(Mat *image)
 {
-
     for (int i = 0; i < mNoteGrid.size(); i++)
     {
         vector<Point> col = mNoteGrid.at(i);
@@ -53,41 +52,17 @@ Mat NoteGrid::gridFound(Mat *image)
         }
     }
 
-
     return *image;
-}
-
-Mat NoteGrid::gridLinesFound(Mat* image)
-{
-    qDebug("gridFound");
-    for ( int i = 0; i < mHorLines.size(); i++)
-    {
-        Vec4i l = mHorLines.at(i);
-        line( *image, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
-    }
-
-    for ( int i = 0; i < mVerLines.size(); i++)
-    {
-        Vec4i l = mVerLines.at(i);
-        line( *image, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,255,0), 1, CV_AA);
-    }
-
-    return *image;
-
 }
 
 Mat NoteGrid::findGrid(Mat *image)
 {
-    if (!perspectiveSetup)
+    if (mStatus == FIXING_PERSPECTIVE)
     {
         return *image;
     }
 
-    if (mStatus == NOT_INITIALIZED)
-    {
-        mStatus = FINDING_GRID;
-    }
-    else if (mStatus == GRID_FOUND)
+    if (mStatus == GRID_FOUND)
     {
         return gridFound(image);
     }
@@ -187,7 +162,11 @@ Mat NoteGrid::findGrid(Mat *image)
                 }
                 else
                 {
-                    int ymean = ysum / ycnt;
+                    int ymean = ysum;
+                    if (ycnt != 0)
+                    {
+                        ymean /= ycnt;
+                    }
                     ycoords.push_back(ymean);
 
                     ysum = 0;
@@ -220,94 +199,6 @@ Mat NoteGrid::findGrid(Mat *image)
 
 }
 
-Mat NoteGrid::findGridLines(Mat* image)
-{
-    if (mStatus == NOT_INITIALIZED)
-    {
-        mStatus = FINDING_GRID;
-    }
-    else if (mStatus == GRID_FOUND)
-    {
-        return gridLinesFound(image);
-    }
-
-    Mat mat;
-
-    cvtColor(*image, mat, CV_BGR2GRAY);
-
-    adaptiveThreshold(mat, mat, 255, CV_ADAPTIVE_THRESH_MEAN_C, CV_THRESH_BINARY_INV, 19, 0);
-
-
-    medianBlur(mat, mat, 5);
-
-
-
-
-
-    Mat cmat;
-    cvtColor(mat, cmat, CV_GRAY2BGR);
-
-    vector<Vec4i> lines;
-
-    int rho = 1;
-    float theta = CV_PI/180;
-    int threshold = 75;
-    int minLength = 60;
-    int maxGap = 2;
-
-    HoughLinesP(mat, lines, rho, theta, threshold, minLength, maxGap);
-    for( size_t i = 0; i < lines.size(); i++ )
-    {
-        Vec4i l = lines[i];
-
-        // Find horizontal lines
-
-        double dx = abs((double)(l[0]-l[2]));
-        double dy = abs((double)(l[1]-l[3]));
-
-        // where |y1-y2| < something
-        if (abs(l[1] - l[3]) < HOR_THOLD)
-        {
-            string lineId = getLineId(l, true);
-
-            mHorMap[lineId] = l;
-
-            line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,0,255), 1, CV_AA);
-        }
-
-        // Find vertical lines
-        // where |x1-x2| < something
-        if (abs(l[0] - l[2]) < VER_THOLD)
-        {
-            string lineId = getLineId(l, false);
-            mVerMap[lineId] = l;
-            line( cmat, Point(l[0], l[1]), Point(l[2], l[3]), Scalar(0,255,0), 1, CV_AA);
-        }
-    }
-
-
-    findCount++;
-    if (findCount == 15)
-    {
-        mStatus = GRID_FOUND;
-
-        for (map<string,Vec4i>::iterator iter = mHorMap.begin(); iter != mHorMap.end(); iter++)
-        {
-            mHorLines.push_back(iter->second);
-        }
-
-        for (map<string,Vec4i>::iterator iter = mVerMap.begin(); iter != mVerMap.end(); iter++)
-        {
-            mVerLines.push_back(iter->second);
-        }
-    }
-
-
-
-
-    return cmat;
-}
-
 string NoteGrid::getLineId(Vec4i line, bool horizontal)
 {
     char dst[100];
@@ -337,119 +228,41 @@ Mat NoteGrid::correctPerspective(Mat* image)
     }
 
 
-    Mat mat;
-    cvtColor(*image, mat, CV_BGR2GRAY);
-
-    threshold(mat, mat, 120, 255, CV_THRESH_BINARY);
-
-    bool x1found = false;
-    bool x2found = false;
-
-    bool x3found = false;
-    bool x4found = false;
-
-
-    int x1 = 0;
-    int x2 = 0;
-    int x3 = 0;
-    int x4 = 0;
-
-
-    uchar* left = &mat.data[0];
-    uchar* right = &mat.data[mat.cols-1];
-    uchar* left2 = &mat.data[mat.cols*(mat.rows-1)];
-    uchar* right2 = &mat.data[mat.cols*(mat.rows-1)+mat.cols-1];
-
-    for (int i = 0; i < mat.cols; i++)
+    if (mStatus == CLICKS_GOT)
     {
-        if (!x1found)
-        {
-            if (*left == 255)
-            {
-                x1found = true;
-                x1 = i;
-            }
-            else
-            {
-                left++;
-            }
-        }
+        Mat dst = Mat::zeros(SCREEN_HEIGHT, SCREEN_WIDTH, CV_8UC3);
 
-        if (!x2found)
-        {
-            if (*right == 255)
-            {
-                x2found = true;
-                x2 = SCREEN_WIDTH - i;
-            }
-            else
-            {
-                right--;
-            }
-        }
+        vector<Point2f> dest_pts;
+        dest_pts.push_back(Point2f(0, 0));
+        dest_pts.push_back(Point2f(dst.cols, 0));
+        dest_pts.push_back(Point2f(dst.cols, dst.rows));
+        dest_pts.push_back(Point2f(0, dst.rows));
+        mDestCoords = dest_pts;
 
-        if (!x3found)
-        {
-            if (*right2 == 255)
-            {
-                x3found = true;
-                x3 = SCREEN_WIDTH - i;
-            }
-            else
-            {
-                right2--;
-            }
-        }
+        Mat src = image->clone();
 
-        if (!x4found)
-        {
-            if (*left2 == 255)
-            {
-                x4found = true;
-                x4 = i;
-            }
-            else
-            {
-                left2++;
-            }
-        }
+        Mat transmtx = getPerspectiveTransform(mPaperCoords, dest_pts);
+        mTransMtx = transmtx;
 
+        warpPerspective(src, dst, transmtx, dst.size());
 
-        if (x1found && x2found && x3found && x4found)
-        {
-            break;
-        }
-    }
-
-    vector<Point2f> corners;
-    corners.push_back(Point2f(x1, 10));
-    corners.push_back(Point2f(x2, 10));
-    corners.push_back(Point2f(x3, mat.rows));
-    corners.push_back(Point2f(x4, mat.rows));
-
-    mPaperCoords = corners;
-
-    Mat dst = Mat::zeros(SCREEN_HEIGHT, SCREEN_WIDTH, CV_8UC3);
-
-    vector<Point2f> dest_pts;
-    dest_pts.push_back(Point2f(0, 0));
-    dest_pts.push_back(Point2f(dst.cols, 0));
-    dest_pts.push_back(Point2f(dst.cols, dst.rows));
-    dest_pts.push_back(Point2f(0, dst.rows));
-    mDestCoords = dest_pts;
-
-    Mat src = image->clone();
-
-    Mat transmtx = getPerspectiveTransform(corners, dest_pts);
-    mTransMtx = transmtx;
-
-    warpPerspective(src, dst, transmtx, dst.size());
-
-    perspectiveCount++;
-    if (perspectiveCount == 60)
-    {
         perspectiveSetup = true;
+
+        mStatus = FINDING_GRID;
+        return dst;
     }
-    return dst;
+    return *image;
+}
+
+void NoteGrid::mousePressed(int x, int y)
+{
+    if (mStatus == FIXING_PERSPECTIVE)
+    {
+        mPaperCoords.push_back(Point2f(x, y));
+        if (mPaperCoords.size() == 4)
+        {
+            mStatus = CLICKS_GOT;
+        }
+    }
 }
 

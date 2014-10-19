@@ -12,6 +12,8 @@ class WebcamViewer : public QGLWidget
 public:
     explicit WebcamViewer(QWidget *parent = 0);
 
+    virtual void mousePressEvent(QMouseEvent *event);
+
 protected:
     void initializeGL(); /// OpenGL initialization
     void paintGL(); /// OpenGL Rendering
@@ -19,9 +21,10 @@ protected:
 
     void updateScene(); /// Forces a scene update
     void renderImage(); /// Render image on openGL frame
-
 signals:
    void imageSizeChanged( int outW, int outH ); /// Used to resize the image outside the widget
+
+   void mousePress(int x, int y);
 
 public slots:
    bool showImage( cv::Mat image ); /// Used to set the image to be viewed

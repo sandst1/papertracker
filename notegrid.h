@@ -15,7 +15,8 @@ class NoteGrid : public QObject
     Q_OBJECT
 public:
     enum Status {
-        NOT_INITIALIZED,
+        FIXING_PERSPECTIVE,
+        CLICKS_GOT,
         FINDING_GRID,
         GRID_FOUND
     };
@@ -27,12 +28,12 @@ public:
 signals:
 
 public slots:
-    cv::Mat findGridLines(cv::Mat* image);
     cv::Mat findGrid(cv::Mat* image);
     cv::Mat gridFound(cv::Mat* image);
-    cv::Mat gridLinesFound(cv::Mat* image);
 
     cv::Mat correctPerspective(cv::Mat* image);
+
+    void mousePressed(int x, int y);
 
 private:
     std::string getLineId(cv::Vec4i line, bool horizontal);

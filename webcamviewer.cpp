@@ -1,4 +1,6 @@
 #include "webcamviewer.h"
+#include <QMouseEvent>
+
 WebcamViewer::WebcamViewer(QWidget *parent) :
     QGLWidget(parent)
 {
@@ -120,6 +122,11 @@ void WebcamViewer::renderImage()
         // end
         glFlush();
     }
+}
+
+void WebcamViewer::mousePressEvent(QMouseEvent *event)
+{
+    emit mousePress(event->x(), event->y());
 }
 
 bool WebcamViewer::showImage( cv::Mat image )

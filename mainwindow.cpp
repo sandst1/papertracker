@@ -16,6 +16,9 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent)
 {
     mWebcamViewer = new WebcamViewer(this);
+
+    QObject::connect(mWebcamViewer, SIGNAL(mousePress(int,int)), this, SLOT(mousePressed(int,int)));
+
     mAudioControl = new AudioControl(this);
     mNoteGrid = new NoteGrid(this);
 
@@ -60,21 +63,28 @@ MainWindow::MainWindow(QWidget *parent) :
     //mAudioControl->pressKey(Synth::KEY_C2, 1);
 
     setFixedSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+
 }
 
 MainWindow::~MainWindow()
 {
 }
 
+void MainWindow::mousePressed(int x, int y)
+{
+    qDebug() << "mouse pressed" << x << ", " << y;
+    mNoteGrid->mousePressed(x, y);
+}
 
 void MainWindow::timerEvent()
 {
     Mat image;
     mCapture >> image;
 
-    //image = mNoteGrid->correctPerspective(&image);
+    image = mNoteGrid->correctPerspective(&image);
 
-    //image = mNoteGrid->findGrid(&image);
+    image = mNoteGrid->findGrid(&image);
 
     mWebcamViewer->showImage(image);
 

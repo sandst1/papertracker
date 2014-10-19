@@ -55,6 +55,8 @@ private:
 
     std::vector<std::vector<cv::Point> > mNoteGrid;
 
+    cv::Mat mLatestFrame;
+
 
 };
 

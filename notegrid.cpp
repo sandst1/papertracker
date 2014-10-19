@@ -42,17 +42,28 @@ NoteGrid::NoteGrid(QObject *parent) :
 
 Mat NoteGrid::gridFound(Mat *image)
 {
+    cvtColor(*image, mLatestFrame, CV_BGR2GRAY);
+
+
     for (int i = 0; i < mNoteGrid.size(); i++)
     {
         vector<Point> col = mNoteGrid.at(i);
         for (int j = 0; j < col.size(); j++)
         {
             Point p = col.at(j);
-            circle(*image, p, 5, Scalar(0,0,255),2);
+//            circle(*image, p, 5, Scalar(0,0,255),2);
         }
     }
 
-    return *image;
+    Mat mat;
+    cvtColor(*image, mat, CV_BGR2GRAY);
+    //medianBlur(mat, mat, 7);
+    //medianBlur(mat, mat, 3);
+
+    //adaptiveThreshold(mat, mat, 255, CV_ADAPTIVE_THRESH_GAUSSIAN_C, CV_THRESH_BINARY_INV, 21, -1);
+    threshold(mat, mat, 135, 255, CV_THRESH_BINARY);
+
+    return mat;
 }
 
 Mat NoteGrid::findGrid(Mat *image)
@@ -263,6 +274,11 @@ void NoteGrid::mousePressed(int x, int y)
         {
             mStatus = CLICKS_GOT;
         }
+    }
+    else if (mStatus == GRID_FOUND)
+    {
+        uchar* data = mLatestFrame.data;
+        qDebug() << "pixel value at " << x << ", " << y << ": " << data[y*SCREEN_WIDTH + x];
     }
 }
 
